@@ -8,19 +8,27 @@ from tornado.httpclient import AsyncHTTPClient
 from tornado import gen
 import tornado.escape
 
-import secrets
 
 LIST_BOARDS_URL = 'https://api.trello.com/1/members/my/boards/'
 LIST_LISTS_URL = 'https://api.trello.com/1/boards/{board_id}/lists'
 CREATE_CARD_URL = 'https://api.trello.com/1/cards'
 ADD_MEMBER_TO_CARD_URL = 'https://api.trello.com/1/cards/{card_id}/idMembers'
 
+
+def get_env_variable(var_name):
+    """ Get the environment variable or return an exception """
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the {} environment variable".format(var_name)
+        raise Exception(error_msg)
+
 try:
-    api_key = secrets.TRELLO_API_KEY
-    api_secret = secrets.TRELLO_API_SECRET
-    token = secrets.TRELLO_TOKEN
-except AttributeError:
-    logging.error("Incomplete secrets.py!", exc_info=True)
+    api_key = get_env_variable('TRELLO_API_KEY')
+    api_secret = get_env_variable('TRELLO_API_SECRET')
+    token = get_env_variable('TRELLO_TOKEN')
+except Exception as e:
+    logging.exception(e.message)
     raise SystemExit(1)
 
 class Trello:
