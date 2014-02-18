@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}List Repos{% end %}
+{% block content %}
+
+<h1><a href="{{ create }}">Add a new repo</a></h1>
+
+<ul>
+    {% for name, url in links %}
+        <li><a href="{{ url }}">{{name}}</a></li>
+    {% end %}
+<ul>
+{% end %}
+
+

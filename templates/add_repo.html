@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ verb }} repository{% end %}
+{% block content %}
+<h1>{{ verb }} Repository </h1>
+<form method="post"> 
+    <p>
+        <label for="repo_owner">Github Repo Owner ("heroku")</label>
+        <input type="text" name="repo_owner" value="{{ repo_owner }}"/>
+    </p>
+    <p>
+        <label for="repo_name">Github repo name ("hk")</label>
+        <input type="text" name="repo_name" value="{{ repo_name }}"/>
+    </p>
+    <p>
+        <label for="board_id">Trello Board ID ("530280242316db566bfcd748")</label>
+        <input type="text" name="board_id" value="{{ board_id }}"/>
+    </p>
+    <p>
+        <label for="list_id" />Trello List ID ("530282294226d0766bbc974e")
+        <input type="text" name="list_id" value="{{ list_id }}"/>
+    </p>
+    <input type="submit" value="Submit">
+</form>
+{% end %}
+
