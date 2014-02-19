@@ -25,7 +25,6 @@ class MyApplication(Application):
     def __init__(self, db_url, **settings):
         if db_url is not None:
             engine = create_engine(db_url,
-                                   echo=True,
                                    connect_args={'sslmode': 'require'})
             create_tables(engine)
 

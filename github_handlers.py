@@ -4,12 +4,74 @@ import urllib.parse
 
 from tornado.web import RequestHandler, HTTPError, URLSpec
 import tornado.escape
+from tornado import gen
+
+import trello
 from repo_crud import RepositoryMixin
+from models import User, Issue
 
 
 class WebHookEndpoint(RequestHandler, RepositoryMixin):
+    def initialize(self):
+        self.trello = trello.Trello()
+
+    @gen.coroutine
+    def _add_pull_request(self, repo, pull_request):
+        db = self.application.db
+
+        # TODO error handling
+        number = pull_request['number']
+        github_user = pull_request['user']['login']
+        title = pull_request['body']
+        body = pull_request['body']
+
+        user = db.query(User)\
+            .filter(User.github_user == github_user).first()
+        issue = db.query(Issue)\
+            .filter(Issue.issue_id == number)\
+            .filter(Issue.repo_id == repo.id)\
+            .first()
+
+        if issue is not None:
+            logging.info(
+                "Issue {}/{} #{} already created, ignoring".format(
+                    repo.owner,
+                    repo.board,
+                    number,
+                )
+            )
+            return
+
+        if user is None:
+            members = None
+            logging.warning(
+                "No Trello user found for github user {}".format(github_user)
+            )
+
+        else:
+            members = [user.trello_user]
+            card_id = yield self.trello.add_card(title,
+                                                 repo.new_list,
+                                                 desc=body,
+                                                 members=members)
+            issue = Issue(repo_id=repo.id,
+                          issue_id=number,
+                          card_id=card_id)
+            db.add(issue)
+            db.save()
+
+            logging.info(
+                "Issue {}/{} #{} created with card id {}".format(
+                    repo.owner,
+                    repo.board,
+                    number,
+                    card_id,
+                )
+            )
+
+    @gen.coroutine
     def post(self, repo_id, event):
-        _ = self.get_or_400(repo_id)
+        repo = self.get_or_400(repo_id)
 
         payload = self.get_body_argument('payload', default=None)
         unquoted = urllib.parse.unquote(payload)
@@ -26,7 +88,8 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
 
         if event == 'pull_request':
             if decoded['pull_request']['state'] == 'open':
-                logging.info('Pull Request opened!')
+                logging.info("Pull requested opened! Creating...")
+                yield self._add_pull_request(repo, decoded['pull_request'])
             else:
                 logging.info('Pull request closed!')
         elif event == 'issues':

@@ -29,7 +29,7 @@ try:
     api_secret = get_env_variable('TRELLO_API_SECRET')
     token = get_env_variable('TRELLO_TOKEN')
 except KeyError as e:
-    logging.exception(e.message)
+    logging.exception(str(e))
     raise SystemExit(1)
 
 
@@ -83,6 +83,7 @@ class Trello:
             body['idMembers'] = ','.join(members)
 
         encoded = json.dumps(body)
+        logging.info(encoded) ## TODO REMOVE
 
         response = yield self.make_request(CREATE_CARD_URL, body=encoded)
         return response.get('id', False)
@@ -109,7 +110,10 @@ if __name__ == "__main__":
         lists = yield t.list_lists(a_board)
         pprint(lists)
         a_list = list(lists.values())[0]
-        card = yield t.add_card("Just a test", a_list, 'doot doot doo')
+        card = yield t.add_card("Just a test",
+                                '530259811a17caee605998d1',
+                                'doot doot doo',
+                                members=['51d3212603fc83a55d000cee'])
         print(card)
 
     ioloop = tornado.ioloop.IOLoop.instance()
