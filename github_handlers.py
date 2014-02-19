@@ -1,5 +1,4 @@
 import json
-from pprint import pformat
 import logging
 import urllib.parse
 
@@ -22,9 +21,24 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
                 "Invalid body received {}".format(self.request.body)
             )
 
-        print(unquoted)
-
         self.set_status(204)
         self.finish()
+
+        if event == 'pull_request':
+            if decoded['pull_request']['state'] == 'open':
+                logging.info('Pull Request opened!')
+            else:
+                logging.info('Pull request closed!')
+        elif event == 'issues':
+            if decoded['issue']['state'] == 'open':
+                logging.info('Issue opened')
+            else:
+                logging.info('Issue closed!')
+        elif (event == 'pull_request_review_comment' or
+              event == 'issue_comment'):
+            logging.info('Comment!')
+        else:
+            logging.warning("Hook receieved unknown event {}".format(event))
+
 
 handlers = [URLSpec(r'/hooks/(\d+)/(\w+)', WebHookEndpoint, name='hook')]
