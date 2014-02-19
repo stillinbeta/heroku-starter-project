@@ -11,6 +11,7 @@ from tornado.web import Application, RequestHandler
 
 from models import create_tables
 import repo_crud
+import github_handlers
 
 define("port", default=5000, help="run on the given port", type=int)
 
@@ -32,7 +33,7 @@ class MyApplication(Application):
 
         handlers = [
             (r"/", MainHandler),
-        ] + repo_crud.handlers
+        ] + repo_crud.handlers + github_handlers.handlers
 
         settings['template_path'] = os.path.join(os.path.dirname(__file__),
                                                  "templates")
