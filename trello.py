@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 from pprint import pprint
@@ -21,15 +22,16 @@ def get_env_variable(var_name):
         return os.environ[var_name]
     except KeyError:
         error_msg = "Set the {} environment variable".format(var_name)
-        raise Exception(error_msg)
+        raise KeyError(error_msg)
 
 try:
     api_key = get_env_variable('TRELLO_API_KEY')
     api_secret = get_env_variable('TRELLO_API_SECRET')
     token = get_env_variable('TRELLO_TOKEN')
-except Exception as e:
+except KeyError as e:
     logging.exception(e.message)
     raise SystemExit(1)
+
 
 class Trello:
     def __init__(self):
@@ -66,7 +68,8 @@ class Trello:
 
     @gen.coroutine
     def list_lists(self, board_id):
-        lists = yield self.make_request(LIST_LISTS_URL.format(board_id=board_id))
+        lists = yield self.make_request(LIST_LISTS_URL.format(
+            board_id=board_id))
         return {list_['name']: list_['id'] for list_ in lists}
 
     @gen.coroutine
