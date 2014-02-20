@@ -16,7 +16,7 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
         self.trello = trello.Trello()
 
     @gen.coroutine
-    def _add_pull_request(self, repo, pull_request):
+    def _add_pull_request(self, repo, pull_request, add_member=True):
         db = self.application.db
 
         # TODO error handling
@@ -25,8 +25,11 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
         title = pull_request['title']
         body = pull_request['body']
 
-        user = db.query(User)\
-            .filter(User.github_user == github_user).first()
+        if add_member:
+            user = db.query(User)\
+                .filter(User.github_user == github_user).first()
+        else:
+            user = None
         issue = db.query(Issue)\
             .filter(Issue.issue_id == number)\
             .filter(Issue.repo_id == repo.id)\
@@ -44,30 +47,33 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
 
         if user is None:
             members = None
-            logging.warning(
-                "No Trello user found for github user {}".format(github_user)
-            )
-
+            if add_member is not None:
+                logging.warning(
+                    "No Trello user found for github user {}".format(
+                        github_user
+                    )
+                )
         else:
             members = [user.trello_user]
-            card_id = yield self.trello.add_card(title,
-                                                 repo.new_list,
-                                                 desc=body,
-                                                 members=members)
-            issue = Issue(repo_id=repo.id,
-                          issue_id=number,
-                          card_id=card_id)
-            db.add(issue)
-            db.commit()
 
-            logging.info(
-                "Issue {}/{} #{} created with card id {}".format(
-                    repo.owner,
-                    repo.repo,
-                    number,
-                    card_id,
-                )
+        card_id = yield self.trello.add_card(title,
+                                             repo.new_list,
+                                             desc=body,
+                                             members=members)
+        issue = Issue(repo_id=repo.id,
+                      issue_id=number,
+                      card_id=card_id)
+        db.add(issue)
+        db.commit()
+
+        logging.info(
+            "Issue {}/{} #{} created with card id {}".format(
+                repo.owner,
+                repo.repo,
+                number,
+                card_id,
             )
+        )
 
     @gen.coroutine
     def post(self, repo_id, event):
@@ -94,7 +100,10 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
                 logging.info('Pull request closed!')
         elif event == 'issues':
             if decoded['issue']['state'] == 'open':
-                logging.info('Issue opened')
+                logging.info('Issue opened! Creating...')
+                yield self._add_pull_request(repo,
+                                             decoded['issue'],
+                                             False)
             else:
                 logging.info('Issue closed!')
         elif (event == 'pull_request_review_comment' or
