@@ -22,7 +22,7 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
         # TODO error handling
         number = pull_request['number']
         github_user = pull_request['user']['login']
-        title = pull_request['body']
+        title = pull_request['title']
         body = pull_request['body']
 
         user = db.query(User)\
@@ -36,7 +36,7 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
             logging.info(
                 "Issue {}/{} #{} already created, ignoring".format(
                     repo.owner,
-                    repo.board,
+                    repo.repo,
                     number,
                 )
             )
@@ -58,12 +58,12 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
                           issue_id=number,
                           card_id=card_id)
             db.add(issue)
-            db.save()
+            db.commit()
 
             logging.info(
                 "Issue {}/{} #{} created with card id {}".format(
                     repo.owner,
-                    repo.board,
+                    repo.repo,
                     number,
                     card_id,
                 )
