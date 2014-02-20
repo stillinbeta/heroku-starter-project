@@ -1,6 +1,10 @@
 heroku-starter-project
 ======================
 
+This is a little bot which takes a Github PR/Issue, and adds it as a card in Trello.
+See [spec.md](https://github.com/stillinbeta/heroku-starter-project/blob/master/spec.md)
+for a complete idea of the (intended) effecs
+
 Setup
 -----
 Setup is really manual atm. Lots of `# TODO`s here.
@@ -17,7 +21,7 @@ Setup is really manual atm. Lots of `# TODO`s here.
     * `heroku config SET TRELLO_API_KEY=<API_KEY> TRELLO_API_SECRET=<API_SECRET> TRELLO_TOKEN=<your_token>`
 * Set up the Github web hooks to point to your application.
     * You'll need to add the hooks for `pull_request`, `issues`, `pull_request_review_comment`, and `issue_comment`
-    * Here's the curl command to use:
+    * Here's the curl command to use (repository id is in the URI after you created your repository in the web interface):
 ```shell
     curl -u "<your username>" -i \
     https://api.github.com/hub \
@@ -25,3 +29,14 @@ Setup is really manual atm. Lots of `# TODO`s here.
     -F "hub.topic=https://github.com/<repo owner>/<repo name>/events/<hook>" \
     -F "hub.callback=http://<your url>.herokuapp.com/hooks/<the repository id>/<hook>"
 ```
+
+TODOs
+-----
+
+* Tagging someone in a comment should assign the issue/PR to them
+* Closing an issue/PR should add a comment to the Trello card.
+* Use the Trello API so users don't need to look up hashes
+    * API methods already implemented in [trello.py](https://github.com/stillinbeta/heroku-starter-project/blob/master/trello.py)
+* UI for the Trello user <-> Github User mapping
+* Automatically setup Github Webhooks when a repository is created
+* Have the application use the Trello interface to get its own token
