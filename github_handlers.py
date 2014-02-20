@@ -103,11 +103,18 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
             return
 
         users = self.application.db.query(User)\
-            .filter(User.github_user.in_(mentions)).first()
-        for user in users:
+            .filter(User.github_user.in_(mentions))
+        # users has no length, so cheat with enumerate
+        for i, user in enumerate(users, 1):
             # TODO make completely async
-            yield self.trello.add_member_to_card(card.card_id,
-                                                 user.trello_user)
+            try:
+                yield self.trello.add_member_to_card(card.card_id,
+                                                     user.trello_user)
+            except HTTPError:
+                #TODO: look into this
+                logging.info(
+                    "HTTPError, probably the user's already on the card"
+                )
             mentions.remove(user.github_user)
 
         if mentions:
@@ -118,7 +125,7 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
             )
 
         logging.info("Added {} users to card {}".format(
-            len(users),
+            i,
             card.card_id
         ))
 
@@ -158,7 +165,8 @@ class WebHookEndpoint(RequestHandler, RepositoryMixin):
             logging.info('Comment!')
             if 'issue' not in decoded:
                 # TODO: pull_request_review_comment events don't have issue
-                logging.warning("Issue not found for comment event, ignoring")
+                logging.warning("Issue not found for comment event, ignoring"
+                                "(Keys were {}".format(decoded.keys()))
             else:
                 yield self._add_members_from_comments(repo, decoded)
 
