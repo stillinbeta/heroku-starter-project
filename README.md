@@ -33,7 +33,6 @@ Setup is really manual atm. Lots of `# TODO`s here.
 TODOs
 -----
 
-* Tagging someone in a comment should assign the issue/PR to them
 * Closing an issue/PR should add a comment to the Trello card.
 * Use the Trello API so users don't need to look up hashes
     * API methods already implemented in [trello.py](https://github.com/stillinbeta/heroku-starter-project/blob/master/trello.py)
